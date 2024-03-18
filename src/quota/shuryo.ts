@@ -1,16 +1,12 @@
-import {isSubcourseOf} from "../course-code.js";
+import {isSubcourseOf, subCodeKishu, subCodeSecondL, subCodeShoshu} from "../course-code.js";
 import {isSpecificReport} from "../report.js";
-import {Karui, KishuForeignLang, ShoshuForeignLang, languageCodeMap} from "../type-utils.js";
+import {Karui, KishuForeignLang, LanguageOption, ShoshuForeignLang, languageCodeMap} from "../type-utils.js";
 import {unreachable} from "../utils.js";
 import {$quota, mergeWithSubs, Requirements, withForCalculation, withSub} from "./definition.js";
 
 export type GenerateOptions = {
   karui: Karui;
-  firstForeignLanguage: KishuForeignLang;
-  secondForeignLanguage:
-    | { lang: KishuForeignLang; learned: true; }
-    | { lang: ShoshuForeignLang; learned: false; }
-  ;
+  langOption: LanguageOption;
   forCalculation: boolean;
 };
 
@@ -25,25 +21,23 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
 
   const createQuotaOfKishu = (lang: KishuForeignLang) => {
     const n = ['en', 'ja'].includes(lang) ? 5 : 6;
-    const d = ({ en: 1, de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8, ja: 9 } as const)[lang];
-    return $quota("既修外国語", n, isSubcourseOf(`FC1${d}`));
+    return $quota("既修外国語", n, isSubcourseOf(subCodeKishu(lang)));
   };
   const createQuotaOfShoshu = (lang: ShoshuForeignLang) => {
-    const d = ({ de: 1, fr: 2, zh: 3, ru: 4, es: 5, ko: 6, it: 7 } as const)[lang];
-    return $quota("初修外国語", 6, isSubcourseOf(`FC2${d}`))
+    return $quota("初修外国語", 6, isSubcourseOf(subCodeShoshu(lang)));
   };
-  const firstL = ((lang: GenerateOptions['firstForeignLanguage']) => {
+  const firstL = ((lang: LanguageOption['firstForeignLanguage']) => {
     const name = languageCodeMap[lang] + '中級，上級';
     const e = lang == 'en' ? 1 : lang == 'ja' ? 9 : void 0;
     if (e != null) {
       return $quota(name, 3, isSubcourseOf(`GCL${e}`, `GCL${e}`));
     } else {
-      const d = ({ de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8 } as const)[lang as Exclude<KishuForeignLang, 'en' | 'ja'>];
-      const s = 'abcdefghijk'.split('').map(e => `GCL${d}${e}`);
+      const c = subCodeSecondL(lang as Exclude<KishuForeignLang, 'en' | 'ja'>);
+      const s = 'abcdefghijk'.split('').map(e => `${c}${e}`);
       return $quota(name, 2, isSubcourseOf(...s as any[]));
     }
-  })(options.firstForeignLanguage);
-  const secondL = (({lang,learned}: GenerateOptions['secondForeignLanguage']) => {
+  })(options.langOption.firstForeignLanguage);
+  const secondL = (({lang,learned}: LanguageOption['secondForeignLanguage']) => {
     if (learned) {
       const name = languageCodeMap[lang] + '中級，上級';
       if (bunka) {
@@ -51,8 +45,8 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
           case 'en': return $quota(name, options.forCalculation ? 4 : 5, isSubcourseOf('GCL1')); // 二外に英語を選択した場合要求単位数が重率計算の際の単位数と合致しないのでとりあえずnを出し分けたが，実際にどうなのかはわからない
           case 'ja': return $quota(name, 4, isSubcourseOf('GCL9', 'GCL9'));
           default: {
-            const d = ({ de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8 } as const)[lang];
-            const s = 'abcdefghijk'.split('').map(e => `GCL${d}${e}`);
+            const c = subCodeSecondL(lang);
+            const s = 'abcdefghijk'.split('').map(e => `${c}${e}`);
             return $quota(name, 4, isSubcourseOf(...s as any[]));
           }
         }
@@ -60,10 +54,10 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
         return $quota(name, 1, isSubcourseOf('GCL1'));
       }
     } else{
-      const d = ({ de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8 } as const)[lang];
-      return !bunka ? void 0 : $quota(languageCodeMap[lang] + '初級（演習）', 4, isSubcourseOf(`GCL${d}2`, `GCL${d}3`));
+      const c = subCodeSecondL(lang);
+      return !bunka ? void 0 : $quota(languageCodeMap[lang] + '初級（演習）', 4, isSubcourseOf(`${c}2`, `${c}3`));
     }
-  })(options.secondForeignLanguage);
+  })(options.langOption.secondForeignLanguage);
 
   const isSposhin = isSubcourseOf('GCD41', 'GCD42', 'PGD10', 'PGD20');
   const sposhinConstraints = withForCalculation(
@@ -85,10 +79,10 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
       $quota('基礎科目', 0, isSubcourseOf('FC'), mergeWithSubs(
         withSub(3,
           $quota('外国語', 0, isSubcourseOf('FC1', 'FC2'), withSub(2,
-            createQuotaOfKishu(options.firstForeignLanguage),
-            options.secondForeignLanguage.learned
-            ? createQuotaOfKishu(options.secondForeignLanguage.lang)
-            : createQuotaOfShoshu(options.secondForeignLanguage.lang)
+            createQuotaOfKishu(options.langOption.firstForeignLanguage),
+            options.langOption.secondForeignLanguage.learned
+            ? createQuotaOfKishu(options.langOption.secondForeignLanguage.lang)
+            : createQuotaOfShoshu(options.langOption.secondForeignLanguage.lang)
             ,
           )),
             $quota('情報', 2, isSubcourseOf('FC3')),

@@ -1,15 +1,11 @@
-import {$and, $not, isSubcourseOf} from "../course-code.js";
-import {Karui, KishuForeignLang, ShoshuForeignLang, languageCodeMap} from "../type-utils.js";
+import {$and, $not, isSubcourseOf, subCodeKishu, subCodeSecondL, subCodeShoshu} from "../course-code.js";
+import {Karui, KishuForeignLang, LanguageOption, ShoshuForeignLang, languageCodeMap} from "../type-utils.js";
 import {unreachable} from "../utils.js";
 import {$quota, Requirements, withSub} from "./definition.js";
 
 export type GenerateOptions = {
   karui: Karui;
-  firstForeignLanguage: KishuForeignLang;
-  secondForeignLanguage:
-    | { lang: KishuForeignLang; learned: true; }
-    | { lang: ShoshuForeignLang; learned: false; }
-  ;
+  langOption: LanguageOption;
   exceptionalTreatmentForKisoji?: boolean;
 };
 export const generateRequirements = (options: GenerateOptions): Requirements => {
@@ -20,22 +16,20 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
 
   const createQuotaOfKishu = (lang: KishuForeignLang) => {
     const n = ['en', 'ja'].includes(lang) ? 5 : 6;
-    const d = ({ en: 1, de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8, ja: 9 } as const)[lang];
-    return $quota("既修外国語", n, isSubcourseOf(`FC1${d}`));
+    return $quota("既修外国語", n, isSubcourseOf(subCodeKishu(lang)));
   };
   const createQuotaOfShoshu = (lang: ShoshuForeignLang) => {
-    const d = ({ de: 1, fr: 2, zh: 3, ru: 4, es: 5, ko: 6, it: 7 } as const)[lang];
-    return $quota("初修外国語", 6, isSubcourseOf(`FC2${d}`))
+    return $quota("初修外国語", 6, isSubcourseOf(subCodeShoshu(lang)));
   };
 
   return {
     min: bunka ? 46 : rika ? 53 : unreachable("文科と理科のみ"), // もし科類が組み変わってここでエラーが出たらこの関数の実装全部見直す
     quotas: [
       [
-        createQuotaOfKishu(options.firstForeignLanguage),
-        options.secondForeignLanguage.learned
-        ? createQuotaOfKishu(options.secondForeignLanguage.lang)
-        : createQuotaOfShoshu(options.secondForeignLanguage.lang)
+        createQuotaOfKishu(options.langOption.firstForeignLanguage),
+        options.langOption.secondForeignLanguage.learned
+        ? createQuotaOfKishu(options.langOption.secondForeignLanguage.lang)
+        : createQuotaOfShoshu(options.langOption.secondForeignLanguage.lang)
         ,
       ],
       bunka
@@ -51,9 +45,9 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
           $quota("総合科目", bunka3rui ? 13 : 11,
             isSubcourseOf('GC', 'FC87', 'FC88', 'FC89', 'PF510', 'PF520', 'PF530', 'PF540', 'PF6', 'PG'),
             withSub(1,
-              $quota("L系列", 5, isSubcourseOf('GCL'), options.secondForeignLanguage.learned ? undefined : withSub(1,
-                $quota(languageCodeMap[options.secondForeignLanguage.lang] + "語初級（演習）①", 2,
-                  isSubcourseOf(`GCL${({ de: 1, fr: 2, zh: 3, ru: 4, es: 5, ko: 6, it: 7 } as const)[options.secondForeignLanguage.lang]}`),
+              $quota("L系列", 5, isSubcourseOf('GCL'), options.langOption.secondForeignLanguage.learned ? undefined : withSub(1,
+                $quota(languageCodeMap[options.langOption.secondForeignLanguage.lang] + "語初級（演習）①", 2,
+                  isSubcourseOf(subCodeSecondL(options.langOption.secondForeignLanguage.lang)),
                 ),
               )),
             ),

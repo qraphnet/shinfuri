@@ -42,7 +42,7 @@ export const judgeSatisfaction = (requirements: Requirements, reports: readonly 
     if (requirements.surplusConstraints.every(({verify}) => verify(Array.from(surplus), report))) {
       surplus.add(report);
       const nList = requirements.quotas.map(internalJudge);
-      const satisfied = nList.every(n => n !== false) && nList.reduce<number>((p, c) => p + (c as number),0) >= requirements.min;
+      const satisfied = nList.every(<T>(n: T): n is Exclude<T, false> => n !== false) && nList.reduce<number>((p, c) => p + c,0) >= requirements.min;
       if (!satisfied) surplus.delete(report);
     }
   }

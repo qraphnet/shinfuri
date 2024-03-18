@@ -1,11 +1,12 @@
+import {collectCreditedAvg} from "./avg-crediting.js";
 import {AdditionalPoint, calc} from "./department/additional-point.js";
 import {apply as crApply} from "./department/course-requirements.js";
 import {Department, getDepartmentInfo} from "./department/index.js";
 import {apply as swApply} from "./department/specific-weights.js";
-import {Requirements} from "./quota/definition.js";
+import {generateRequirements} from "./quota/shuryo.js";
 import {Rational} from "./rational.js";
 import {ScoredCourseReport, SpecificReport, isScoredReport} from "./report.js";
-import {Karui} from "./type-utils.js";
+import {Karui, LanguageOption} from "./type-utils.js";
 import {Weighted, bundle, distributeBasic, distributeChoiki, distributeEng} from "./weights.js";
 
 export type AverageType = '基本' | '工学' | '超域';
@@ -18,13 +19,24 @@ export type CalculationTicket = {
   factor: Rational | undefined; // 取得単位数(上限90)を掛ける場合
 };
 
-export const makeTicket = (reports: SpecificReport[], requirements: Requirements, karui: Karui, department: Department, phase: 1 | 2 | 3, exclude: ScoredCourseReport['grade'][]): CalculationTicket => {
+export type Options = {
+  karui: Karui;
+  group: 1 | 2 | 3 | 4;
+  langOption: LanguageOption;
+  department: Department;
+  phase: 1 | 2 | 3; // 段階
+  exclude: ScoredCourseReport['grade'][]; // 計算から除外するやつ
+};
+export const makeTicket = (reports: SpecificReport[], options: Options): CalculationTicket => {
+  const { karui, langOption, department, phase, exclude, group } = options;
+  const requirements = generateRequirements({ karui, langOption, forCalculation: true });
   const { avgType, courseRequirementPatterns, specifiedWeightRules, additionalPointRules, doesMultiplyByAcquired } = getDepartmentInfo(department, phase, karui);
   if (courseRequirementPatterns.length == 0) courseRequirementPatterns.push([]);
 
   const additionalPoint = additionalPointRules.flatMap(rule => calc(reports, rule));
-  const acquiredUnitSum = reports.filter(r => !['不可', '欠席', '未履修'].includes(r.grade)).reduce((p, r) => p + r.course.credit, 0);
-  const factor = doesMultiplyByAcquired ? Rational.int(acquiredUnitSum) : undefined;
+  const avgCredited: Set<SpecificReport> = collectCreditedAvg(reports.filter(isScoredReport), langOption, group);
+  const acquiredUnitSum = reports.filter(r => !['不可', '欠席', '未履修'].includes(r.grade) || avgCredited.has(r)).reduce((p, r) => p + r.course.credit, 0);
+  const factor = doesMultiplyByAcquired ? Rational.int(Math.min(90, acquiredUnitSum)) : undefined;
 
   let res: CalculationTicket;
   let avg = -1;

@@ -1,6 +1,6 @@
 // by reference of https://www.u-tokyo.ac.jp/ja/students/classes/course-numbering.html
 
-import {Digit, SmallAlphabet, FirstNChars} from "./type-utils.js";
+import {Digit, SmallAlphabet, FirstNChars, KishuForeignLang, ShoshuForeignLang} from "./type-utils.js";
 
 // 開講学科・専攻等コード
 type DepartmentCode = 'FC' | 'IC' | 'GC' | 'TC' | 'PF' | 'PI' | 'PG' | 'PT';
@@ -35,6 +35,19 @@ type Pred = (code: CourseCode) => boolean;
 export const $not = (pred: Pred): Pred => code => !pred(code);
 export const $and = (...preds: Pred[]): Pred => code => preds.every(p => p(code));
 export const $or = (...preds: Pred[]): Pred => code => preds.some(p => p(code));
+
+export const subCodeKishu = (lang: KishuForeignLang) => {
+  const d = ({ en: 1, de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8, ja: 9 } as const)[lang];
+  return `FC1${d}` as const;
+};
+export const subCodeShoshu = (lang: ShoshuForeignLang) => {
+  const d = ({ de: 1, fr: 2, zh: 3, ru: 4, es: 5, ko: 6, it: 7 } as const)[lang];
+  return `FC2${d}` as const;
+};
+export const subCodeSecondL = (lang: ShoshuForeignLang) => {
+  const d = ({ de: 2, fr: 3, zh: 4, ru: 5, es: 6, ko: 7, it: 8 } as const)[lang];
+  return `GCL${d}` as const;
+};
 
 /**
  * 与えられたCourseCodeに対応する科目名を返す

@@ -19,7 +19,7 @@ const $ = (scope: AdditionalPointRule['scope'], max: number | undefined, point: 
 
 export const calc = (reports: SpecificReport[], rule: AdditionalPointRule): AdditionalPoint[] => {
   const { scope, max, point } = rule;
-  return reports.map(r => r.course.code).filter(scope).map((code, i) => ({ code, point, valid: max == null || (i + 1) <= max }));
+  return reports.filter(r => ['不可', '欠席', '不合格', '未履修'].includes(r.grade)).map(r => r.course.code).filter(scope).map((code, i) => ({ code, point, valid: max == null || (i + 1) <= max }));
 };
 
 export const none: AdditionalPointRuleGenerator = () => [];

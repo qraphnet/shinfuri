@@ -6,6 +6,13 @@ export type FirstNChars<S extends string> = S extends `${infer T}${Char}` ? Firs
 
 export type KishuForeignLang = 'en' | 'de' | 'fr' | 'zh' | 'ru' | 'es' | 'ko' | 'it' | 'ja';
 export type ShoshuForeignLang = 'de' | 'fr' | 'zh' | 'ru' | 'es' | 'ko' | 'it';
+export type LanguageOption = {
+  firstForeignLanguage: KishuForeignLang;
+  secondForeignLanguage:
+    | { lang: KishuForeignLang; learned: true; }
+    | { lang: ShoshuForeignLang; learned: false; }
+  ;
+};
 export const languageCodeMap = {
   en: '英語',
   de: 'ドイツ語',
