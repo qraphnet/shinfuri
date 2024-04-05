@@ -1,6 +1,6 @@
 // by reference of https://www.u-tokyo.ac.jp/ja/students/classes/course-numbering.html
 
-import {Digit, SmallAlphabet, FirstNChars, KishuForeignLang, ShoshuForeignLang} from "./type-utils.js";
+import {Digit, SmallAlphabet, FirstNChars, KishuForeignLang, ShoshuForeignLang, LanguageOption} from "./type-utils.js";
 
 // 開講学科・専攻等コード
 type DepartmentCode = 'FC' | 'IC' | 'GC' | 'TC' | 'PF' | 'PI' | 'PG' | 'PT';
@@ -55,6 +55,25 @@ export const subCodeSecondL = (lang: ShoshuForeignLang) => {
 export const getTitle = (code: CourseCode): string => {
   // @ts-ignore
   return serialNumberMap[code.slice(0, 2)][code.slice(3)][0];
+};
+
+/**
+ * 与えられた科目名に対応するCourseCodeを返す
+ */
+export const getCourseCode = (title: string, option: LanguageOption): CourseCode | undefined => {
+  const kishuSubCode = subCodeKishu(option.firstForeignLanguage);
+  const shoshuSubCode = option.secondForeignLanguage.learned ? subCodeKishu(option.secondForeignLanguage.lang) : subCodeShoshu(option.secondForeignLanguage.lang);
+  const predLang = isSubcourseOf('FC1', 'FC2'), predShu = isSubcourseOf(kishuSubCode, shoshuSubCode);
+  const it = Object.entries(serialNumberMap) as { [K in keyof SerialNumberMap]: [K, SerialNumberMap[K]] }[keyof SerialNumberMap][];
+  for (const [k, v] of it) {
+    type That<V = typeof v> = V extends infer T ? { [K in keyof T]: [K, T[K]] }[keyof T][] : never;
+    const that = Object.entries(v) as That;
+    for (const [l, w] of that) {
+      const code = (k + l) as CourseCode;
+      if (predLang(code) && !predShu(code)) continue;
+      if (title.startsWith(w[0])) return code;
+    }
+  }
 };
 
 type SerialNumberMap = typeof serialNumberMap;
