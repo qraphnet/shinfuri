@@ -1,4 +1,5 @@
 import {CourseCode, isSubcourseOf, subCodeKishu, subCodeShoshu} from "./course-code.js";
+import {Credit} from "./course.js";
 import {SpecificScoredReport} from "./report.js";
 import {LanguageOption} from "./type-utils.js";
 
@@ -83,3 +84,17 @@ const collect = (rules: Rule[], reports: SpecificScoredReport[]): SpecificScored
   });
   return flag ? reports.filter(isNotTaken).filter(re => rules.some(ru => ru.scope(re.course.code))) : [];
 }
+
+export const creditOfCourse = (code: CourseCode): Credit | undefined => {
+  switch (code) {
+    case 'FC111':
+    case 'FC112':
+    case 'FC113':
+    case 'FC193':
+    case 'FC194':
+    case 'FC410':
+    case 'FC420': return 1;
+    default: return isSubcourseOf('FC1', 'FC2') ? 2 : undefined;
+  }
+};
+
