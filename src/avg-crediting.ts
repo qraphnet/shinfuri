@@ -85,16 +85,16 @@ const collect = (rules: Rule[], reports: SpecificScoredReport[]): SpecificScored
   return flag ? reports.filter(isNotTaken).filter(re => rules.some(ru => ru.scope(re.course.code))) : [];
 }
 
+const one = isSubcourseOf(
+  'FC111', 'FC112', 'FC113',
+  'FC193', 'FC194',
+  'FC4',
+  'FC81', 'FC82', 'FC83', 'FC84', 'FC85', 'FC86',
+  'FC873', 'FC875', 'FC877', 'FC878', 'FC879', 'FC87a',
+  'FC891'
+);
+const fc = isSubcourseOf('FC');
 export const creditOfCourse = (code: CourseCode): Credit | undefined => {
-  switch (code) {
-    case 'FC111':
-    case 'FC112':
-    case 'FC113':
-    case 'FC193':
-    case 'FC194':
-    case 'FC410':
-    case 'FC420': return 1;
-    default: return isSubcourseOf('FC1', 'FC2')(code) ? 2 : undefined;
-  }
+  return one(code) ? 1 : fc(code) ? 2 : undefined;
 };
 
