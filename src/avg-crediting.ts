@@ -94,7 +94,7 @@ export const creditOfCourse = (code: CourseCode): Credit | undefined => {
     case 'FC194':
     case 'FC410':
     case 'FC420': return 1;
-    default: return isSubcourseOf('FC1', 'FC2') ? 2 : undefined;
+    default: return isSubcourseOf('FC1', 'FC2')(code) ? 2 : undefined;
   }
 };
 
