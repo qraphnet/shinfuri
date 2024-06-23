@@ -54,7 +54,7 @@ export const subCodeSecondL = (lang: ShoshuForeignLang) => {
  */
 export const getTitle = (code: CourseCode): string => {
   // @ts-ignore
-  return serialNumberMap[code.slice(0, 2)][code.slice(3)][0];
+  return serialNumberMap[code.slice(0, 2)][code.slice(2)][0];
 };
 
 /**
