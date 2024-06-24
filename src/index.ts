@@ -6,7 +6,7 @@ import {apply as swApply} from "./department/specific-weights.js";
 import {generateRequirements} from "./quota/shuryo.js";
 import {Rational} from "./rational.js";
 import {ScoredCourseReport, SpecificReport, isScoredReport} from "./report.js";
-import {Karui, LanguageOption} from "./type-utils.js";
+import {Karui, Group, LanguageOption, Phase} from "./type-utils.js";
 import {Weighted, bundle, distributeBasic, distributeChoiki, distributeEng} from "./weights.js";
 
 export type AverageType = '基本' | '工学' | '超域';
@@ -21,10 +21,10 @@ export type CalculationTicket = {
 
 export type Options = {
   karui: Karui;
-  group: 1 | 2 | 3 | 4;
+  group: Group;
   langOption: LanguageOption;
   department: Department;
-  phase: 1 | 2 | 3; // 段階
+  phase: Phase;
   exclude: ScoredCourseReport['grade'][]; // 計算から除外するやつ
 };
 export const makeTicket = (reports: SpecificReport[], options: Options): CalculationTicket => {

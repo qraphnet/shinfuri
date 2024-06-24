@@ -30,7 +30,8 @@ export const languageCodeMap = {
 export type Karui = 'HSS1' | 'HSS2' | 'HSS3' | 'NS1' | 'NS2' | 'NS3';
 export const karuiJa: Record<Karui, string> = { HSS1: '文科一類', HSS2: '文科二類', HSS3: '文科三類', NS1: '理科一類', NS2: '理科二類', NS3: '理科三類' };
 export const classNumList: Record<Karui, number> = { HSS1: 28, HSS2: 28, HSS3: 20, NS1: 39, NS2: 24, NS3: 24 };
-export const grouping = {
+export type Group = 1 | 2 | 3 | 4;
+export const grouping: Record<Karui, Group[]> = {
   HSS1: [3,3,3,4,2,2,3,1,4,3,1,4,2,4,2,2,3,2,2,3,3,1,3,2,1,1,3,3],
   HSS2: [3,3,3,4,2,2,3,1,4,3,1,4,2,4,2,2,3,2,2,3,3,1,3,2,1,1,3,3],
   HSS3: [3,3,3,4,1,2,1,4,3,2,1,2,4,1,3,3,2,4,1,4],
@@ -38,3 +39,5 @@ export const grouping = {
   NS2 : [4,4,4,3,4,2,2,3,3,4,1,4,1,3,4,4,3,2,2,1,3,2,1,4],
   NS3 : [4,4,4,3,4,2,2,3,3,4,1,4,1,3,4,4,3,2,2,1,3,2,1,4],
 };
+
+export type Phase = 1 | 2 | 3;

@@ -1,13 +1,13 @@
 import {CourseCode, isSubcourseOf, subCodeKishu, subCodeShoshu} from "./course-code.js";
 import {Credit} from "./course.js";
 import {SpecificScoredReport} from "./report.js";
-import {LanguageOption} from "./type-utils.js";
+import {Group, LanguageOption} from "./type-utils.js";
 
 const averagePointOf = (reports: SpecificScoredReport[]) =>
   reports.reduce((s, r) => s + r.point * r.course.credit, 0) / reports.reduce((s, r) => s + r.course.credit, 0);
 const isNotTaken = (report: SpecificScoredReport) => ['不可', '欠席', '未履修'].includes(report.grade);
 
-export const collectCreditedAvg = (reports: SpecificScoredReport[], languageOption: LanguageOption, group: 1 | 2 | 3 | 4): Set<SpecificScoredReport> => {
+export const collectCreditedAvg = (reports: SpecificScoredReport[], languageOption: LanguageOption, group: Group): Set<SpecificScoredReport> => {
   const res = new Set<SpecificScoredReport>;
   // 第一外国語
   {

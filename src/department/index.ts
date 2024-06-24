@@ -1,5 +1,5 @@
 import {AverageType} from "../index.js";
-import {Karui} from "../type-utils.js";
+import {Karui, Phase} from "../type-utils.js";
 import * as ap from "./additional-point.js";
 import * as cr from "./course-requirements.js";
 import * as sw from "./specific-weights.js";
@@ -12,7 +12,7 @@ export type DepartmentInfo = {
   doesMultiplyByAcquired: boolean;
 };
 
-export const getDepartmentInfo = (d: Department, phase: 1 | 2 | 3, karui: Karui): DepartmentInfo => {
+export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): DepartmentInfo => {
   const avgType = sub(d, '工', '工学部指定平均点') ? '工学'
     : sub(d, '教養/教養学科/超域文化科学') && phase != 1 ? '超域'
     : '基本';
