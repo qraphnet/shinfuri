@@ -4,8 +4,10 @@ export type SmallAlphabet = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' 
 export type Char = Digit | LargeAlphabet | SmallAlphabet;
 export type FirstNChars<S extends string> = S extends `${infer T}${Char}` ? FirstNChars<T> | S : never;
 
-export type KishuForeignLang = 'en' | 'de' | 'fr' | 'zh' | 'ru' | 'es' | 'ko' | 'it' | 'ja';
-export type ShoshuForeignLang = 'de' | 'fr' | 'zh' | 'ru' | 'es' | 'ko' | 'it';
+export const kishuForeignLangList = ['en', 'de', 'fr', 'zh', 'ru', 'es', 'ko', 'it', 'ja'] as const;
+export type KishuForeignLang = (typeof kishuForeignLangList)[number];
+export const shohuForeignLangList = ['de', 'fr', 'zh', 'ru', 'es', 'ko', 'it'] as const;
+export type ShoshuForeignLang = (typeof shohuForeignLangList)[number];
 export type LanguageOption = {
   firstForeignLanguage: KishuForeignLang;
   secondForeignLanguage:
@@ -26,4 +28,13 @@ export const languageCodeMap = {
 } as const satisfies Record<KishuForeignLang | ShoshuForeignLang, string>;
 
 export type Karui = 'HSS1' | 'HSS2' | 'HSS3' | 'NS1' | 'NS2' | 'NS3';
-
+export const karuiJa: Record<Karui, string> = { HSS1: '文科一類', HSS2: '文科二類', HSS3: '文科三類', NS1: '理科一類', NS2: '理科二類', NS3: '理科三類' };
+export const classNumList: Record<Karui, number> = { HSS1: 28, HSS2: 28, HSS3: 20, NS1: 39, NS2: 24, NS3: 24 };
+export const grouping = {
+  HSS1: [3,3,3,4,2,2,3,1,4,3,1,4,2,4,2,2,3,2,2,3,3,1,3,2,1,1,3,3],
+  HSS2: [3,3,3,4,2,2,3,1,4,3,1,4,2,4,2,2,3,2,2,3,3,1,3,2,1,1,3,3],
+  HSS3: [3,3,3,4,1,2,1,4,3,2,1,2,4,1,3,3,2,4,1,4],
+  NS1 : [1,1,1,1,4,4,2,3,2,4,3,1,2,4,4,3,1,1,2,1,3,4,1,3,2,4,3,2,3,2,1,4,3,2,1,1,2,4,1],
+  NS2 : [4,4,4,3,4,2,2,3,3,4,1,4,1,3,4,4,3,2,2,1,3,2,1,4],
+  NS3 : [4,4,4,3,4,2,2,3,3,4,1,4,1,3,4,4,3,2,2,1,3,2,1,4],
+};

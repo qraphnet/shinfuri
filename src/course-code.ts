@@ -654,3 +654,16 @@ export const serialNumberMap = {
   },
 } as const satisfies Record<DepartmentCode, Partial<Record<SerialNumber, readonly string[]>>>;
 
+let courseCodes: CourseCode[];
+export const getCourseCodes = (): CourseCode[] => {
+  if (courseCodes == null) {
+    const codes: CourseCode[] = [];
+    for (const [k, v] of Object.entries(serialNumberMap)) {
+      for (const l of Object.keys(v)) {
+        codes.push((k + l) as CourseCode);
+      }
+    }
+    courseCodes = codes;
+  }
+  return courseCodes;
+};
