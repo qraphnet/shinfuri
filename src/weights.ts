@@ -1,4 +1,5 @@
 import {engPoint, sumWeightedCredit, sumWeightedPoint} from "./index.js";
+import {match} from './course-code.js';
 import {Credit} from "./course.js"
 import {allocate} from "./quota/utils.js";
 import {Quota, Requirements} from "./quota/definition.js";
@@ -65,7 +66,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     const it = remains.under(quota);
     for (const [q, r] of it) {
       if (distributedSubQ.length >= quota.minSub) break;
-      const sq = quota.subQuotas.find(sq => sq.filter(r.course.code))!;
+      const sq = quota.subQuotas.find(sq => match(sq.scope, r.course.code))!;
       if (!distributedSubQ.includes(sq)) {
         const errors = ones.check(q, r, 1);
         if (errors.length == 0) {
@@ -84,7 +85,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     for (const sq of quota.subQuotas) {
       if (distributedSubQ.length >= quota.minSub) break;
       if (!distributedSubQ.includes(sq)) {
-        const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: sq.filter, grade: '未履修', point: 0 };
+        const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: sq.scope, grade: '未履修', point: 0 };
         ones.add(sq, r);
         expls1.set(r, {
           description: `「${quota.name}」は${quota.subQuotas.map(sq=>`「${sq.name}」`).join('，')}のうち${quota.minSub}以上の枠が重率1の単位で埋まっている必要がある`,
@@ -120,7 +121,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
       const lack = quota.n - ones.count(quota);
       if (lack > 0) {
         for (let i = 0; i < lack; ++i) {
-          const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: quota.filter, grade: '未履修', point: 0 };
+          const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: quota.scope, grade: '未履修', point: 0 };
           ones.add(quota, r);
           expls1.set(r, {
             description: `「${quota.name}」のうち成績上位${quota.n}単位は重率1`,

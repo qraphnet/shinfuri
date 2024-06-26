@@ -1,9 +1,9 @@
-import {CourseCode} from "../course-code.js";
+import {Scope, CourseCodePrefix} from "../course-code.js";
 import {ScoredCourseReport, SpecificReport, SpecificScoredReport} from "../report.js";
 
 export type Quota = {
   name: string;
-  filter: (code: CourseCode) => boolean;
+  scope: Scope;
   n: number | undefined;
   subQuotas: readonly Quota[]; // the filters of the sub quotas must be mutually exclusive
   minSub: number;
@@ -17,8 +17,8 @@ export type CalculationConstraint = {
   verify: (allocated: readonly ScoredCourseReport[], tobeAdded: SpecificScoredReport, weightRatio: 1 | 0.1) => boolean;
 };
 
-export const $quota = (name: string, n: number | undefined, filter: (code: CourseCode) => boolean, withSub: WithSub = { subQuotas: [], minSub: 0 }, withForCalculation: WithForCalculation = { forCalculation: { constraints: [] } }): Quota =>
-  ({ name, filter, n, ...withSub, ...withForCalculation })
+export const $quota: (name: string, n: number | undefined, scope: { include: CourseCodePrefix[], exclude?: CourseCodePrefix[] }, withSub?: WithSub, withForCalculation?: WithForCalculation) => Quota = (name: string, n: number | undefined, { include, exclude = [] }, withSub: WithSub = { subQuotas: [], minSub: 0 }, withForCalculation: WithForCalculation = { forCalculation: { constraints: [] } }): Quota =>
+  ({ name, scope: { include, exclude }, n, ...withSub, ...withForCalculation })
 ;
 type WithSub = Pick<Quota, 'subQuotas' | 'minSub'>;
 export const withSub = (min: number, ...subQuotas: Quota[]): WithSub => ({ subQuotas, minSub: min });

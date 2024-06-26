@@ -8,6 +8,11 @@ type DepartmentCode = 'FC' | 'IC' | 'GC' | 'TC' | 'PF' | 'PI' | 'PG' | 'PT';
 type SerialNumber = `${Exclude<Digit, '0'> | 'L' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' }${Digit | SmallAlphabet}${Digit | SmallAlphabet}`;
 // 共通科目コードのうち，開講学科コード（実質的には科目区分）と整理番号のみとりだしてつなげて，このプログラム内での科目コードとした
 export type CourseCode = { [K in keyof SerialNumberMap]: `${K}${ SerialNumberMap[K] extends infer T ? {[L in keyof T]: L }[keyof T] : never }` }[keyof SerialNumberMap];
+export type CourseCodePrefix = FirstNChars<CourseCode>;
+export type Scope = { include: CourseCodePrefix[]; exclude: CourseCodePrefix[]; };
+export const match: (prefix: Scope, code: CourseCode) => boolean =  ({ include, exclude }, code) => {
+  return include.some(prefix => code.startsWith(prefix)) && exclude.every(prefix => !code.startsWith(prefix));
+};
 
 // 科目コードの順序を定義（整理番号表（https://www.c.u-tokyo.ac.jp/zenki/z-numbercode2024.pdf）に基づく）
 const departmentOrder = Object.fromEntries([...['FC','IC','GC','TC','PF','PI','PG','PT'].entries()].map(([k,v])=>[v,k])) as Record<DepartmentCode, number>;
@@ -23,7 +28,7 @@ export const courseCodeToInt = (code: CourseCode) => 0
 /**
  * CourseCodeの先頭n文字を可変長引数で受け取り，それらのいずれかに一致するかどうかを判定する関数を返す
  */
-export const isSubcourseOf = (...codes: FirstNChars<CourseCode>[]) => {
+export const isSubcourseOf = (...codes: CourseCodePrefix[]) => {
   if (codes.length == 1) {
     const [n] = codes;
     return (code: CourseCode) => code.startsWith(n);

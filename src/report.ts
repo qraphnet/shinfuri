@@ -1,4 +1,4 @@
-import { CourseCode, courseCodeToInt } from "./course-code.js";
+import { Scope, courseCodeToInt } from "./course-code.js";
 import { Course } from "./course.js";
 
 /**
@@ -8,7 +8,7 @@ export type Report =
   | { type: 'scored'; course: Course; grade: '優上' | '優' | '良' | '可' | '不可' | '欠席'; point: number }
   | { type: 'unscored'; course: Course; grade: '合格' | '不合格'; point?: undefined }
   | { type: 'unenrolled-specific'; course: Omit<Course, 'year' | 'term'>;  grade: '未履修'; point: 0; descriotion?: string }
-  | { type: 'unenrolled-somewhat'; course?: undefined, scope: (code: CourseCode) => boolean; grade: '未履修'; point: 0; }
+  | { type: 'unenrolled-somewhat'; course?: undefined, scope: Scope; grade: '未履修'; point: 0; }
 ;
 
 export type SpecificReport = Report & { course: any } extends infer T ? { [K in keyof T]: T[K] } : never;

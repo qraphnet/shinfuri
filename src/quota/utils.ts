@@ -1,5 +1,6 @@
 import {SpecificReport} from "../report.js";
 import {exclude} from "../utils.js";
+import {match} from '../course-code.js';
 import {Quota, Requirements} from "./definition.js";
 
 export const allocate = <T extends SpecificReport>(quotas: readonly Quota[], reports: readonly T[]): Map<Quota, T[]> => {
@@ -7,7 +8,7 @@ export const allocate = <T extends SpecificReport>(quotas: readonly Quota[], rep
   const internal = (quotas: readonly Quota[], reports: T[]) => {
     for (const quota of quotas) {
       if (allocations.has(quota)) return;
-      const qualifiedCourses = exclude(reports, r => quota.filter(r.course.code));
+      const qualifiedCourses = exclude(reports, r => match(quota.scope, r.course.code));
       allocations.set(quota, qualifiedCourses);
       internal(quota.subQuotas, qualifiedCourses);
     }
