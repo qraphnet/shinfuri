@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { CourseCode, getTitle, serialNumberMap, getCourseCode } from './course-code.js';
+import { CourseCode, Scope, getTitle, serialNumberMap, getCourseCode } from './course-code.js';
 import { LanguageOption } from './type-utils.js';
 
 describe('getTitle', () => {
@@ -29,5 +29,14 @@ describe('getCourseCode', () => {
   });
   test('same code', () => {
     expect(getCourseCode('情報α', option)).toBe('FC300');
+  });
+});
+
+describe('scope', () => {
+  test('include', () => {
+    expect(new Scope(['FC']).includes(new Scope(['FC1', 'FC2']))).toBe(true);
+    expect(new Scope(['FC1', 'FC2']).includes(new Scope(['FC']))).toBe(false);
+    expect(new Scope(['FC'], ['FC3']).includes(new Scope(['FC'], ['FC3', 'FC4']))).toBe(true);
+    expect(new Scope(['FC'], ['FC3', 'FC4']).includes(new Scope(['FC'], ['FC4']))).toBe(false);
   });
 });

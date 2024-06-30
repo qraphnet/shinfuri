@@ -4,7 +4,7 @@ import * as ap from "./additional-point.js";
 import * as cr from "./course-requirements.js";
 import * as sw from "./specific-weights.js";
 
-export type DepartmentInfo = {
+export interface DepartmentInfo {
   avgType: AverageType;
   courseRequirementPatterns: cr.RequiredCourse[][];
   specifiedWeightRules: sw.WeightRule[];
@@ -72,7 +72,7 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
 
   const doesMultiplyByAcquired = phase == 2 ? sub(d, '工/システム創生学科') : sub(d, '農');
 
-  return { avgType, courseRequirementPatterns: cr.satisfy(courseRequirement), specifiedWeightRules, additionalPointRules, doesMultiplyByAcquired };
+  return { avgType, courseRequirementPatterns: courseRequirement.satisfy(), specifiedWeightRules, additionalPointRules, doesMultiplyByAcquired };
 };
 
 type Substr<S extends string> = S extends `${infer T}/${infer U}` ? T | `${T}/${Substr<U>}` : S extends `${infer T}（${any}）` ? T : S;

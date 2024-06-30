@@ -1,28 +1,30 @@
 import {engPoint, sumWeightedCredit, sumWeightedPoint} from "./index.js";
-import {match} from './course-code.js';
 import {Credit} from "./course.js"
 import {allocate} from "./quota/utils.js";
 import {Quota, Requirements} from "./quota/definition.js";
 import {ScoredCourseReport, SpecificScoredReport, ordering} from "./report.js";
 
 // 重率の計算に当たっては2単位科目でも1単位ごとに分けて処理されるので，各単位を代表するデータ型を定義
-export type WeightedUnit = {
+export interface WeightedUnit {
   report: ScoredCourseReport;
   weight: Weight;
   expls: Expl[]; // 重率が weight になった理由
 };
-export type Weighted = {
+export interface Weighted {
   report: ScoredCourseReport;
   weights: { credit: Credit; value: Weight; expls: Expl[]; }[];
 };
-export type Expl = {
+export interface Expl {
   description: string;
   references: string[];
 };
 
 export type Weight = 0 | 0.1 | 1 | 1.5 | 2 | 5;
 
-export const isSpecificWeightedUnit = (w: WeightedUnit): w is { [K in keyof WeightedUnit]: K extends 'report' ? SpecificScoredReport : WeightedUnit[K] } => w.report.course != null;
+interface SpecificWeightedUnit extends WeightedUnit {
+  report: SpecificScoredReport
+}
+export const isSpecificWeightedUnit = (w: WeightedUnit): w is SpecificWeightedUnit => w.report.course != null;
 
 /**
  * 同じReportのWeightedUnitをまとめてWeightedにする
@@ -66,7 +68,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     const it = remains.under(quota);
     for (const [q, r] of it) {
       if (distributedSubQ.length >= quota.minSub) break;
-      const sq = quota.subQuotas.find(sq => match(sq.scope, r.course.code))!;
+      const sq = quota.subQuotas.find(sq => sq.scope.match(r.course.code))!;
       if (!distributedSubQ.includes(sq)) {
         const errors = ones.check(q, r, 1);
         if (errors.length == 0) {
@@ -85,7 +87,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     for (const sq of quota.subQuotas) {
       if (distributedSubQ.length >= quota.minSub) break;
       if (!distributedSubQ.includes(sq)) {
-        const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: sq.scope, grade: '未履修', point: 0 };
+        const r: ScoredCourseReport = { scope: sq.scope, grade: '未履修', point: 0 };
         ones.add(sq, r);
         expls1.set(r, {
           description: `「${quota.name}」は${quota.subQuotas.map(sq=>`「${sq.name}」`).join('，')}のうち${quota.minSub}以上の枠が重率1の単位で埋まっている必要がある`,
@@ -98,7 +100,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     // 余計に0点算入している場合
     if (distributedSubQ.length > quota.minSub) {
       const reitensanyuCounts = distributedSubQ.map<[Quota, number]>(sq => [sq, ones.countUnenrolled(sq)]).toSorted(([, a], [, b]) => a - b);
-      for (const [sq] of reitensanyuCounts.slice(quota.minSub)) ones.filter(sq, r => r.type != 'unenrolled-specific' && r.type != 'unenrolled-somewhat');
+      for (const [sq] of reitensanyuCounts.slice(quota.minSub)) ones.filter(sq, r => r.grade != '未履修');
     }
 
     if (quota.n != null) {
@@ -121,7 +123,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
       const lack = quota.n - ones.count(quota);
       if (lack > 0) {
         for (let i = 0; i < lack; ++i) {
-          const r: ScoredCourseReport = { type: 'unenrolled-somewhat', scope: quota.scope, grade: '未履修', point: 0 };
+          const r: ScoredCourseReport = { scope: quota.scope, grade: '未履修', point: 0 };
           ones.add(quota, r);
           expls1.set(r, {
             description: `「${quota.name}」のうち成績上位${quota.n}単位は重率1`,
@@ -326,13 +328,13 @@ class Distribution {
     return this.#map.get(q)!.count;
   }
   countUnenrolled(q: Quota): number {
-    return this.#map.get(q)!.rs.filter(r => r.type == 'unenrolled-specific' || r.type == 'unenrolled-somewhat').length
+    return this.#map.get(q)!.rs.filter(r => r.grade == '未履修').length
       + q.subQuotas.reduce((p, q) => p + this.countUnenrolled(q), 0);
   }
   check(q: Quota, r: SpecificScoredReport, w: 1 | 0.1): Expl[] {
     const { parent, rs } = this.#map.get(q)!;
 
-    const scored = rs.filter((r): r is ScoredCourseReport => r.type == 'scored');
+    const scored = rs.filter((r): r is ScoredCourseReport => r.grade != '未履修');
     const descs = q.forCalculation.constraints
       .map(({ description, references, verify }) => verify(scored, r, w) ? void 0 : { description, references })
       .filter(<T>(v: T): v is Exclude<T, undefined> => v !== undefined);

@@ -1,23 +1,43 @@
 import { Scope, courseCodeToInt } from "./course-code.js";
 import { Course } from "./course.js";
 
+export type ScoredGrade = '優上' | '優' | '良' | '可' | '不可' | '欠席';
+export type UnscoredGrade = '合格' | '不合格';
+export type Grade = ScoredGrade | UnscoredGrade | '未履修';
+
 /**
  * 成績表の各行に対応するデータ型
  */
-export type Report =
-  | { type: 'scored'; course: Course; grade: '優上' | '優' | '良' | '可' | '不可' | '欠席'; point: number }
-  | { type: 'unscored'; course: Course; grade: '合格' | '不合格'; point?: undefined }
-  | { type: 'unenrolled-specific'; course: Omit<Course, 'year' | 'term'>;  grade: '未履修'; point: 0; descriotion?: string }
-  | { type: 'unenrolled-somewhat'; course?: undefined, scope: Scope; grade: '未履修'; point: 0; }
-;
+export interface ScoredReport {
+  course: Course;
+  grade: ScoredGrade;
+  point: number;
+}
+export interface UnscoredReport {
+  course: Course;
+  grade: UnscoredGrade;
+  point?: undefined;
+}
+export interface UnenrolledSpecificReport {
+  course: Omit<Course, 'year' | 'term'>;
+  grade: '未履修';
+  point: 0;
+  descriotion?: string;
+}
+export interface UnenrolledSomeReport {
+  course?: undefined;
+  scope: Scope;
+  grade: '未履修';
+  point: 0;
+  descriotion?: string;
+}
+export type Report = ScoredReport | UnscoredReport | UnenrolledSpecificReport | UnenrolledSomeReport;
 
-export type SpecificReport = Report & { course: any } extends infer T ? { [K in keyof T]: T[K] } : never;
+export type SpecificReport = ScoredReport | UnscoredReport | UnenrolledSpecificReport;
 export const isSpecificReport = <T extends Report>(r: T): r is T & SpecificReport => 'course' in r;
-export type ScoredCourseReport = Report & { point: number } extends infer T ? { [K in keyof T]: T[K] } : never;
+export type ScoredCourseReport = ScoredReport | UnenrolledSpecificReport | UnenrolledSomeReport;
 export const isScoredReport = <T extends Report>(r: T): r is T & ScoredCourseReport => 'point' in r;
 export type SpecificScoredReport = SpecificReport & ScoredCourseReport;
-export type Grade = Report['grade'];
-export type ScoredGrade = (Report & { type: 'scored' })['grade'];
 
 /**
  * p.56で頻出の「成績上位」のためにソートするときに使う関数．

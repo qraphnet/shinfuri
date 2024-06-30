@@ -1,6 +1,6 @@
 import {CourseCode} from "./course-code.js";
 
-export type Course = {
+export interface Course {
   code: CourseCode;
   year: number; // 開講年度
   term: Term; // 開講セメスター/ターム

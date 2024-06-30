@@ -1,44 +1,48 @@
-import {Scope, CourseCodePrefix} from "../course-code.js";
+import {Scope} from "../course-code.js";
 import {ScoredCourseReport, SpecificReport, SpecificScoredReport} from "../report.js";
 
-export type Quota = {
-  name: string;
-  scope: Scope;
-  n: number | undefined;
-  subQuotas: readonly Quota[]; // the filters of the sub quotas must be mutually exclusive
+export class Quota {
+  subQuotas: Quota[]; // the filters of the sub quotas must be mutually exclusive
   minSub: number;
   forCalculation: {
     constraints: CalculationConstraint[];
+  };
+
+  constructor(readonly name: string, readonly n: number | undefined, readonly scope: Scope) {
+    this.subQuotas = [];
+    this.minSub = 0;
+    this.forCalculation = { constraints: [] };
   }
-};
-export type CalculationConstraint = {
+
+  withSub(min: number, subQuotas: Quota[], apply: boolean = true): this {
+    if (apply && subQuotas.length != 0) {
+      this.minSub += min;
+      this.subQuotas.push(...subQuotas);
+    }
+    return this;
+  }
+  
+  withForCalc(constraints: CalculationConstraint[], apply: boolean = true): this {
+    if (apply) this.forCalculation.constraints.push(...constraints);
+    return this;
+  }
+}
+export interface CalculationConstraint {
   description: string;
   references: string[];
-  verify: (allocated: readonly ScoredCourseReport[], tobeAdded: SpecificScoredReport, weightRatio: 1 | 0.1) => boolean;
+  verify: Verifier;
 };
+export type Verifier = (allocated: readonly ScoredCourseReport[], tobeAdded: SpecificScoredReport, weightRatio: 1 | 0.1) => boolean;
 
-export const $quota: (name: string, n: number | undefined, scope: { include: CourseCodePrefix[], exclude?: CourseCodePrefix[] }, withSub?: WithSub, withForCalculation?: WithForCalculation) => Quota = (name: string, n: number | undefined, { include, exclude = [] }, withSub: WithSub = { subQuotas: [], minSub: 0 }, withForCalculation: WithForCalculation = { forCalculation: { constraints: [] } }): Quota =>
-  ({ name, scope: { include, exclude }, n, ...withSub, ...withForCalculation })
-;
-type WithSub = Pick<Quota, 'subQuotas' | 'minSub'>;
-export const withSub = (min: number, ...subQuotas: Quota[]): WithSub => ({ subQuotas, minSub: min });
-export const mergeWithSubs = (...subs: (WithSub | undefined)[]) => ({
-  subQuotas: subs.flatMap(sub => sub == null ? [] : sub.subQuotas),
-  minSub: subs.reduce((p, c) => p + (c == null ? 0 : c.minSub), 0),
-});
-type WithForCalculation = Pick<Quota, 'forCalculation'>;
-export const withForCalculation = (...constraints: CalculationConstraint[]): WithForCalculation => ({
-  forCalculation: { constraints },
-});
-
-export type Requirements = {
+export interface Requirements {
   min: number;
   quotas: readonly Quota[];
   surplusMin: number;
-  surplusConstraints: {
+  surplusConstraints: SurplusConstraint[];
+};
+export type SurplusVerifier = (allocated: readonly SpecificReport[], tobeAdded: SpecificReport) => boolean;
+export interface SurplusConstraint {
     description: string;
     references: string[];
-    verify: (allocated: readonly SpecificReport[], tobeAdded: SpecificReport) => boolean;
-  }[];
-};
-
+    verify: SurplusVerifier;
+}

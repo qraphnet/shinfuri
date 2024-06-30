@@ -9,9 +9,17 @@ type SerialNumber = `${Exclude<Digit, '0'> | 'L' | 'A' | 'B' | 'C' | 'D' | 'E' |
 // 共通科目コードのうち，開講学科コード（実質的には科目区分）と整理番号のみとりだしてつなげて，このプログラム内での科目コードとした
 export type CourseCode = { [K in keyof SerialNumberMap]: `${K}${ SerialNumberMap[K] extends infer T ? {[L in keyof T]: L }[keyof T] : never }` }[keyof SerialNumberMap];
 export type CourseCodePrefix = FirstNChars<CourseCode>;
-export type Scope = { include: CourseCodePrefix[]; exclude: CourseCodePrefix[]; };
-export const match: (prefix: Scope, code: CourseCode) => boolean =  ({ include, exclude }, code) => {
-  return include.some(prefix => code.startsWith(prefix)) && exclude.every(prefix => !code.startsWith(prefix));
+export class Scope {
+  constructor(readonly include: CourseCodePrefix[], readonly exclude: CourseCodePrefix[] = []) {}
+  match(code: CourseCodePrefix): boolean {
+    return this.include.some(prefix => code.startsWith(prefix)) && this.exclude.every(prefix => !code.startsWith(prefix));
+  }
+  includes(inner: Scope): boolean {
+    return inner.include.every(prefix => this.match(prefix as any)) && this.exclude.every(prefix => !inner.match(prefix as any));
+  }
+  get pred(): (code: CourseCodePrefix) => boolean {
+    return this.match.bind(this);
+  }
 };
 
 // 科目コードの順序を定義（整理番号表（https://www.c.u-tokyo.ac.jp/zenki/z-numbercode2024.pdf）に基づく）
