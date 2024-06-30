@@ -1,9 +1,10 @@
 {
   "name": "shinfuri",
-  "version": "2.3.1",
+  "version": "3.0.0",
   "description": "A calculator of various average scores for shingaku-sentaku at UT.",
   "type": "module",
   "main": "lib/index.js",
+  "files": [ "lib" ],
   "engines": {
     "node": ">=20"
   },
