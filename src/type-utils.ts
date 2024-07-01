@@ -15,6 +15,15 @@ export type LanguageOption = {
     | { lang: ShoshuForeignLang; learned: false; }
   ;
 };
+export const isLanguageOption = (value: unknown): value is LanguageOption => {
+  if (!('object' === typeof value && value != null && 'firstForeignLanguage' in value && 'secondForeignLanguage' in value)) return false;
+  const { firstForeignLanguage: first, secondForeignLanguage: second } = value;
+  if (!kishuForeignLangList.includes(first as any)) return false;
+  if (!('object' === typeof second && second != null && 'lang' in second && 'learned' in second)) return false;
+  const { lang, learned } = second;
+  return 'boolean' === typeof learned && (learned ? kishuForeignLangList.includes(lang as any) : shohuForeignLangList.includes(lang as any) );
+};
+
 export const languageCodeMap = {
   en: '英語',
   de: 'ドイツ語',
@@ -27,8 +36,11 @@ export const languageCodeMap = {
   ja: '日本語',
 } as const satisfies Record<KishuForeignLang | ShoshuForeignLang, string>;
 
-export type Karui = 'HSS1' | 'HSS2' | 'HSS3' | 'NS1' | 'NS2' | 'NS3';
+export const karuiList = ['HSS1', 'HSS2', 'HSS3', 'NS1', 'NS2', 'NS3'] as const;
+export type Karui = (typeof karuiList)[number];
+export const isKarui = (value: unknown): value is Karui => karuiList.includes(value as any);
 export const karuiJa: Record<Karui, string> = { HSS1: '文科一類', HSS2: '文科二類', HSS3: '文科三類', NS1: '理科一類', NS2: '理科二類', NS3: '理科三類' };
+
 export const classNumList: Record<Karui, number> = { HSS1: 28, HSS2: 28, HSS3: 20, NS1: 39, NS2: 24, NS3: 24 };
 export type Group = 1 | 2 | 3 | 4;
 export const grouping: Record<Karui, Group[]> = {

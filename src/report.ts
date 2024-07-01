@@ -1,9 +1,12 @@
 import { Scope, courseCodeToInt } from "./course-code.js";
 import { Course } from "./course.js";
 
-export type ScoredGrade = '優上' | '優' | '良' | '可' | '不可' | '欠席';
-export type UnscoredGrade = '合格' | '不合格';
-export type Grade = ScoredGrade | UnscoredGrade | '未履修';
+export const scoredGrade = ['優上', '優', '良', '可', '不可', '欠席'] as const;
+export const unscoredGrade = ['合格', '不合格'] as const;
+export const unenrolledGrade = '未履修';
+export type ScoredGrade = (typeof scoredGrade)[number];
+export type UnscoredGrade = (typeof unscoredGrade)[number];
+export type Grade = ScoredGrade | UnscoredGrade | typeof unenrolledGrade;
 
 /**
  * 成績表の各行に対応するデータ型

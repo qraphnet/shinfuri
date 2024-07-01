@@ -78,6 +78,7 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
 type Substr<S extends string> = S extends `${infer T}/${infer U}` ? T | `${T}/${Substr<U>}` : S extends `${infer T}（${any}）` ? T : S;
 const sub = (d: Department, ...ds: Substr<Department>[]) => ds.some(s => d.startsWith(s));
 export type Department = (typeof department)[number];
+export const isDepartment = (value: unknown): value is Department => department.includes(value as any);
 export const department = [
   '基本平均点',
   '工学部指定平均点',
