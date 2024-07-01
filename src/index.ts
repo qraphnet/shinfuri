@@ -3,6 +3,7 @@ import {AdditionalPoint, calc} from "./department/additional-point.js";
 import {apply as crApply} from "./department/course-requirements.js";
 import {Department, getDepartmentInfo} from "./department/index.js";
 import {apply as swApply} from "./department/specific-weights.js";
+import {Repetition, disableAbsentBeforeRepetition} from "./repetition.js";
 import {generateRequirements} from "./quota/shuryo.js";
 import {Rational} from "./rational.js";
 import {ScoredCourseReport, SpecificReport, isScoredReport} from "./report.js";
@@ -26,9 +27,10 @@ export type Options = {
   department: Department;
   phase: Phase;
   exclude: ScoredCourseReport['grade'][]; // 計算から除外するやつ
+  lastRepetition?: Repetition;
 };
 export const makeTicket = (reports: SpecificReport[], options: Options): CalculationTicket => {
-  const { karui, langOption, department, phase, exclude, group } = options;
+  const { karui, langOption, department, phase, exclude, group, lastRepetition } = options;
   const requirements = generateRequirements({ karui, langOption, forCalculation: true });
   const { avgType, courseRequirementPatterns, specifiedWeightRules, additionalPointRules, doesMultiplyByAcquired } = getDepartmentInfo(department, phase, karui);
   if (courseRequirementPatterns.length == 0) courseRequirementPatterns.push([]);
@@ -41,8 +43,9 @@ export const makeTicket = (reports: SpecificReport[], options: Options): Calcula
   let res: CalculationTicket;
   let avg = -1;
 
+  const reportList = lastRepetition == null ? reports : reports.filter(disableAbsentBeforeRepetition(lastRepetition));
   for (const r of courseRequirementPatterns) {
-    const reps = crApply(r, reports);
+    const reps = crApply(r, reportList);
     const weighted = dmap[avgType](reps.filter(isScoredReport), requirements);
     swApply(weighted, specifiedWeightRules);
     const weights = bundle(weighted).filter(exclude.length === 0 ? () => true : w => !exclude.includes(w.report.grade));

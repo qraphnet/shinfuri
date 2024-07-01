@@ -1,13 +1,12 @@
 import { describe, expect, test } from '@jest/globals';
 import {Credit, Term} from "../course.js";
 import { ScoredGrade, SpecificReport } from '../report.js';
-import {generateRequirements} from '../quota/shuryo.js';
 import {CourseCode} from '../course-code.js';
 import {calculate, makeTicket} from '../index.js';
 import {LanguageOption} from '../type-utils.js';
 
 const $ = (code: CourseCode, year: number, term: Term, credit: Credit, grade: ScoredGrade, point: number): SpecificReport => ({
-  type: 'scored', course: { code, year, term, credit }, grade, point,
+  course: { code, year, term, credit }, grade, point,
 });
 
 // cf. https://www.c.u-tokyo.ac.jp/zenki/shitei-sampleA-1.pdf
@@ -24,7 +23,7 @@ describe('shitei sample A', () => {
     $('FC300', 2022, 'S', 2, '良', 69),
     $('FC410', 2022, 'S', 1, '優', 86),
     $('FC420', 2022, 'A', 1, '優', 89),
-    { type: 'unscored', course: { code: 'FC520', year: 2022, term: 'S', credit: 2 }, grade: '合格' },
+    { course: { code: 'FC520', year: 2022, term: 'S', credit: 2 }, grade: '合格' },
     $('FC830', 2022, 'A', 1, '良', 74),
     $('FC840', 2022, 'A', 1, '良', 78),
     $('FC850', 2023, 'S', 1, '良', 75),
@@ -51,8 +50,8 @@ describe('shitei sample A', () => {
     $('GCE41', 2022, 'A', 2, '優', 84),
     $('GCF31', 2022, 'S', 2, '不可', 40),
     $('GCF48', 2022, 'S', 2, '良', 69),
-    { type: 'unscored', course: { code: 'TC200', year: 2022, term: 'A', credit: 2 }, grade: '合格' },
-    { type: 'unscored', course: { code: 'TC200', year: 2022, term: 'A', credit: 2 }, grade: '合格' },
+    { course: { code: 'TC200', year: 2022, term: 'A', credit: 2 }, grade: '合格' },
+    { course: { code: 'TC200', year: 2022, term: 'A', credit: 2 }, grade: '合格' },
   ];
 
   const karui = 'NS2', langOption: LanguageOption = { firstForeignLanguage: 'en', secondForeignLanguage: { lang: 'fr', learned: false } };

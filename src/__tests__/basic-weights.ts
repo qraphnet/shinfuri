@@ -1,12 +1,11 @@
 import { describe, expect, test } from '@jest/globals';
 import {Credit, Term} from "../course.js";
 import { ScoredGrade, SpecificReport } from '../report.js';
-import {generateRequirements} from '../quota/shuryo.js';
 import {CourseCode} from '../course-code.js';
-import {Options, calculate, makeTicket} from '../index.js';
+import {calculate, makeTicket} from '../index.js';
 
 const $ = (code: CourseCode, year: number, term: Term, credit: Credit, grade: ScoredGrade, point: number): SpecificReport => ({
-  type: 'scored', course: { code, year, term, credit }, grade, point,
+  course: { code, year, term, credit }, grade, point,
 });
 
 // cf. https://zenkyomu.c.u-tokyo.ac.jp/sentaku/heikinten-sample.pdf
