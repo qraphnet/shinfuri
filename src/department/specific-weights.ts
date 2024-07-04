@@ -3,7 +3,7 @@ import {Scope} from "../course-code.js";
 import {Karui} from "../type-utils.js";
 import {unreachable} from "../utils.js";
 import {Weight, WeightedUnit, isSpecificWeightedUnit} from "../weights.js";
-import {ordering} from "../report.js";
+import {ordering, ScoredCourseReport} from "../report.js";
 
 export type WeightRule = {
   scope: Scope;
@@ -17,7 +17,7 @@ const $ = (scope: Scope, n: number | undefined, weight: Weight, shutokuOnly: boo
   ({ scope, n, weight, shutokuOnly })
 ;
 
-export const apply = (weighted: readonly WeightedUnit[], rules: readonly WeightRule[]) => {
+export const apply = (weighted: WeightedUnit<ScoredCourseReport>[], rules: readonly WeightRule[]) => {
   for (const { scope, n, weight, shutokuOnly } of rules) {
     const targets = weighted
       .filter(isSpecificWeightedUnit)

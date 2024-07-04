@@ -41,6 +41,7 @@ export const isSpecificReport = <T extends Report>(r: T): r is T & SpecificRepor
 export type ScoredCourseReport = ScoredReport | UnenrolledSpecificReport | UnenrolledSomeReport;
 export const isScoredReport = <T extends Report>(r: T): r is T & ScoredCourseReport => 'point' in r;
 export type SpecificScoredReport = SpecificReport & ScoredCourseReport;
+export type UnenrolledReport = UnenrolledSpecificReport | UnenrolledSomeReport;
 
 /**
  * p.56で頻出の「成績上位」のためにソートするときに使う関数．

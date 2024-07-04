@@ -2,16 +2,16 @@ import {engPoint, sumWeightedCredit, sumWeightedPoint} from "./index.js";
 import {Credit} from "./course.js"
 import {allocate} from "./quota/utils.js";
 import {Quota, Requirements} from "./quota/definition.js";
-import {ScoredCourseReport, SpecificScoredReport, ordering} from "./report.js";
+import {ScoredCourseReport, SpecificScoredReport, UnenrolledReport, ordering} from "./report.js";
 
 // 重率の計算に当たっては2単位科目でも1単位ごとに分けて処理されるので，各単位を代表するデータ型を定義
-export interface WeightedUnit {
-  report: ScoredCourseReport;
+export interface WeightedUnit<R extends ScoredCourseReport> {
+  report: R;
   weight: Weight;
   expls: Expl[]; // 重率が weight になった理由
 };
-export interface Weighted {
-  report: ScoredCourseReport;
+export interface Weighted<R extends ScoredCourseReport> {
+  report: R;
   weights: { credit: Credit; value: Weight; expls: Expl[]; }[];
 };
 export interface Expl {
@@ -21,16 +21,16 @@ export interface Expl {
 
 export type Weight = 0 | 0.1 | 1 | 1.5 | 2 | 5;
 
-interface SpecificWeightedUnit extends WeightedUnit {
-  report: SpecificScoredReport
+interface SpecificWeightedUnit<R extends SpecificScoredReport> extends WeightedUnit<R> {
+  report: R;
 }
-export const isSpecificWeightedUnit = (w: WeightedUnit): w is SpecificWeightedUnit => w.report.course != null;
+export const isSpecificWeightedUnit = <R extends ScoredCourseReport>(w: WeightedUnit<R>): w is SpecificWeightedUnit<R & SpecificScoredReport> => w.report.course != null;
 
 /**
  * 同じReportのWeightedUnitをまとめてWeightedにする
  */
-export const bundle = (us: readonly WeightedUnit[]): Weighted[] => {
-  const map = new Map<ScoredCourseReport, WeightedUnit[]>;
+export const bundle = <R extends ScoredCourseReport>(us: readonly WeightedUnit<R>[]): Weighted<R>[] => {
+  const map = new Map<R, WeightedUnit<R>[]>;
   for (const { report } of us) map.set(report, []);
   for (const u of us) map.get(u.report)!.push(u);
   return [...map].map(([r, us]) => {
@@ -51,12 +51,12 @@ export const bundle = (us: readonly WeightedUnit[]): Weighted[] => {
 /**
  * 修了要件と履修科目の成績から基本平均点における重率を計算する
  */
-export const distributeBasic = (reports: readonly SpecificScoredReport[], requirements: Requirements): WeightedUnit[] => {
-  const remains = new Remain(requirements.quotas, reports);
-  const ones = new Distribution(requirements.quotas);
-  const point1 = new Distribution(requirements.quotas);
-  const expls1 = new Map<ScoredCourseReport, Expl>;
-  const expls01 = new Map<ScoredCourseReport, Expl[]>;
+export const distributeBasic = <R extends SpecificScoredReport>(reports: readonly R[], requirements: Requirements): WeightedUnit<R | UnenrolledReport>[] => {
+  const remains = new Remain<R>(requirements.quotas, reports);
+  const ones = new Distribution<R | UnenrolledReport>(requirements.quotas);
+  const point1 = new Distribution<R>(requirements.quotas);
+  const expls1 = new Map<R | UnenrolledReport, Expl>;
+  const expls01 = new Map<R, Expl[]>;
 
   // quotaに該当する科目のうち重率1の単位を決める関数
   const distribute1 = (quota: Quota) => {
@@ -87,7 +87,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     for (const sq of quota.subQuotas) {
       if (distributedSubQ.length >= quota.minSub) break;
       if (!distributedSubQ.includes(sq)) {
-        const r: ScoredCourseReport = { scope: sq.scope, grade: '未履修', point: 0 };
+        const r: UnenrolledReport = { scope: sq.scope, grade: '未履修', point: 0 };
         ones.add(sq, r);
         expls1.set(r, {
           description: `「${quota.name}」は${quota.subQuotas.map(sq=>`「${sq.name}」`).join('，')}のうち${quota.minSub}以上の枠が重率1の単位で埋まっている必要がある`,
@@ -123,7 +123,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
       const lack = quota.n - ones.count(quota);
       if (lack > 0) {
         for (let i = 0; i < lack; ++i) {
-          const r: ScoredCourseReport = { scope: quota.scope, grade: '未履修', point: 0 };
+          const r: UnenrolledReport = { scope: quota.scope, grade: '未履修', point: 0 };
           ones.add(quota, r);
           expls1.set(r, {
             description: `「${quota.name}」のうち成績上位${quota.n}単位は重率1`,
@@ -148,9 +148,9 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
     }
   }
 
-  const w1: WeightedUnit[] = ones.values().map(r => ({ report: r, weight: 1, expls: [expls1.get(r)!] }));
-  const w01: WeightedUnit[] = point1.values().map(r => ({ report: r, weight: .1, expls: expls01.get(r) ?? [] }));
-  const w0: WeightedUnit[] = [...remains.all()].map(([, r]) => ({ report: r, weight: 0, expls: expls01.get(r) ?? [] }));
+  const w1: WeightedUnit<R | UnenrolledReport>[] = ones.values().map(r => ({ report: r, weight: 1, expls: [expls1.get(r)!] }));
+  const w01: WeightedUnit<R>[] = point1.values().map(r => ({ report: r, weight: .1, expls: expls01.get(r) ?? [] }));
+  const w0: WeightedUnit<R>[] = [...remains.all()].map(([, r]) => ({ report: r, weight: 0, expls: expls01.get(r) ?? [] }));
 
   return [...w1, ...w01, ...w0];
 };
@@ -158,7 +158,7 @@ export const distributeBasic = (reports: readonly SpecificScoredReport[], requir
 /**
  * 修了要件と履修科目の成績から工学部指定平均点における重率を計算する
  */
-export const distributeEng = (reports: readonly SpecificScoredReport[], requirements: Requirements): WeightedUnit[] => {
+export const distributeEng = <R extends SpecificScoredReport>(reports: readonly R[], requirements: Requirements): WeightedUnit<R | UnenrolledReport>[] => {
   const wu = distributeBasic(reports, requirements);
   const weighted01 = wu
     .filter(u => u.weight === 0.1)
@@ -181,10 +181,10 @@ export const distributeEng = (reports: readonly SpecificScoredReport[], requirem
 /**
  * 教養学部後期課程の超域文化科学の指定平均点の重率を計算する
  */
-export const distributeChoiki = (reports: readonly SpecificScoredReport[]): WeightedUnit[] => {
+export const distributeChoiki = <R extends SpecificScoredReport>(reports: readonly R[]): WeightedUnit<R>[] => {
   const reps = reports.toSorted((a, b) => -ordering(a, b));
   const n = Math.round(reps.length * 6 / 10);
-  const wu: WeightedUnit[] = [];
+  const wu: WeightedUnit<R>[] = [];
 
   for (const [k, report] of reps.entries()) {
     for (let i = 0; i < report.course.credit; ++i) {
@@ -204,30 +204,30 @@ export const distributeChoiki = (reports: readonly SpecificScoredReport[]): Weig
   return wu;
 };
 
-class Remain {
-  #map: Map<Quota, Map<SpecificScoredReport, Credit>>;
+class Remain<R extends SpecificScoredReport> {
+  #map: Map<Quota, Map<R, Credit>>;
 
-  constructor(quotas: readonly Quota[], reports: readonly SpecificScoredReport[]) {
+  constructor(quotas: readonly Quota[], reports: readonly R[]) {
     this.#map = new Map;
 
     for (const [q, rs] of allocate(quotas, reports)) {
-      const map = new Map<SpecificScoredReport, Credit>;
+      const map = new Map<R, Credit>;
       for (const r of rs) map.set(r, r.course.credit);
       this.#map.set(q, map);
     }
   }
 
-  *#getUnder(q: Quota): Generator<[Quota, SpecificScoredReport]> {
+  *#getUnder(q: Quota): Generator<[Quota, R]> {
     for (const sq of q.subQuotas) yield* this.#getUnder(sq);
     for (const [r, c] of this.#map.get(q)!) for (let i = 0; i < c; ++i) yield [q, r];
   }
-  *#getAll(): Generator<[Quota, SpecificScoredReport]> {
+  *#getAll(): Generator<[Quota, R]> {
     for (const [q, m] of this.#map)
       for (const [r, c] of m)
         for (let i = 0; i < c; ++i) yield [q, r];
   }
 
-  all(): IterableIterator<[Quota, SpecificScoredReport]> & { consume: () => void; } {
+  all(): IterableIterator<[Quota, R]> & { consume: () => void; } {
     const rs = [...this.#getAll()].toSorted(([, a], [, b]) => -ordering(a, b));
 
     let i = -1;
@@ -257,7 +257,7 @@ class Remain {
     };
   }
 
-  under(q: Quota): IterableIterator<[Quota, SpecificScoredReport]> & { consume: () => void; } {
+  under(q: Quota): IterableIterator<[Quota, R]> & { consume: () => void; } {
     const rs = [...this.#getUnder(q)].toSorted(([, a], [, b]) => -ordering(a, b));
 
     let i = -1;
@@ -288,8 +288,8 @@ class Remain {
   }
 }
 
-class Distribution {
-  #map: Map<Quota, { parent?: Quota; count: number; rs: ScoredCourseReport[] }>;
+class Distribution<R extends ScoredCourseReport> {
+  #map: Map<Quota, { parent?: Quota; count: number; rs: R[] }>;
   constructor(quotas: readonly Quota[]) {
     this.#map = new Map;
     
@@ -308,12 +308,12 @@ class Distribution {
     data.count += delta;
     if (data.parent != null) this.#updateCount(data.parent, delta);
   }
-  add(q: Quota, r: ScoredCourseReport) {
+  add(q: Quota, r: R) {
     const data = this.#map.get(q)!;
     data.rs.push(r);
     this.#updateCount(q, +1);
   }
-  filter(q: Quota, predicate: (r: ScoredCourseReport) => boolean) {
+  filter(q: Quota, predicate: (r: R) => boolean) {
     const data = this.#map.get(q)!;
     const filtered = data.rs.filter(r => predicate(r));
     this.#updateCount(q, filtered.length - data.rs.length);
@@ -321,7 +321,7 @@ class Distribution {
 
     q.subQuotas.forEach(sq => this.filter(sq, predicate));
   }
-  get(q: Quota): readonly ScoredCourseReport[] {
+  get(q: Quota): readonly R[] {
     return this.#map.get(q)?.rs ?? [];
   }
   count(q: Quota): number {
@@ -334,7 +334,7 @@ class Distribution {
   check(q: Quota, r: SpecificScoredReport, w: 1 | 0.1): Expl[] {
     const { parent, rs } = this.#map.get(q)!;
 
-    const scored = rs.filter((r): r is ScoredCourseReport => r.grade != '未履修');
+    const scored = rs.filter((r): r is R => r.grade != '未履修');
     const descs = q.forCalculation.constraints
       .map(({ description, references, verify }) => verify(scored, r, w) ? void 0 : { description, references })
       .filter(<T>(v: T): v is Exclude<T, undefined> => v !== undefined);
@@ -342,7 +342,7 @@ class Distribution {
     return [...descs, ...(parent == null ? [] : this.check(parent, r, w))];
   }
 
-  values(): ScoredCourseReport[] {
+  values(): R[] {
       return [...this.#map.values()].flatMap(v=>v.rs);
   }
 }

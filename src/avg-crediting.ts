@@ -9,7 +9,7 @@ type Rule = {
   threshold: number;
 };
 
-const collect = (rules: Rule[], reports: SpecificScoredReport[]): SpecificScoredReport[] => {
+const collect = <R extends SpecificScoredReport>(rules: Rule[], reports: R[]): R[] => {
   const flag = rules.every(({ scope, n, threshold }) => {
     const target = reports.filter(r => scope.match(r.course.code));
     return target.length === n && averagePointOf(target) >= threshold;
@@ -22,8 +22,8 @@ const averagePointOf = (reports: SpecificScoredReport[]) =>
 
 const isNotTaken = (report: SpecificScoredReport) => ['不可', '欠席', '未履修'].includes(report.grade);
 
-export const collectCreditedAvg = (reports: SpecificScoredReport[], languageOption: LanguageOption, group: Group): Set<SpecificScoredReport> => {
-  const res = new Set<SpecificScoredReport>;
+export const collectCreditedAvg = <R extends SpecificScoredReport>(reports: R[], languageOption: LanguageOption, group: Group): Set<R> => {
+  const res = new Set<R>;
   // 第一外国語
   {
     const { firstForeignLanguage: lang } = languageOption, subcode = subCodeKishu(lang);
