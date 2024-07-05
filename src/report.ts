@@ -5,8 +5,24 @@ export const scoredGrade = ['優上', '優', '良', '可', '不可', '欠席'] a
 export const unscoredGrade = ['合格', '不合格'] as const;
 export const unenrolledGrade = '未履修';
 export type ScoredGrade = (typeof scoredGrade)[number];
+export const isScoredGrade = (value: unknown): value is ScoredGrade => scoredGrade.includes(value as any);
 export type UnscoredGrade = (typeof unscoredGrade)[number];
+export const isUnscoredGrade = (value: unknown): value is UnscoredGrade => unscoredGrade.includes(value as any);
 export type Grade = ScoredGrade | UnscoredGrade | typeof unenrolledGrade;
+
+export const pointToGrade = (point: number): ScoredGrade | undefined => {
+  for (const [k, { min, max }] of Object.entries(gradeRange)) if (min <= point && point <= max) return k as ScoredGrade;
+  return void 0;
+};
+
+export const gradeRange = {
+  '優上': { min: 90, max: 100 },
+  '優': { min: 80, max: 89 },
+  '良': { min: 65, max: 79 },
+  '可': { min: 50, max: 64 },
+  '不可': { min: 0, max: 49 },
+  '欠席': { min: 0, max: 0 },
+} satisfies Record<ScoredGrade, { min: number; max: number }>
 
 /**
  * 成績表の各行に対応するデータ型
@@ -53,12 +69,3 @@ export const ordering = (a: SpecificScoredReport, b: SpecificScoredReport) => {
   return pointOrd ? pointOrd : -codeOrd;
 };
 
-export const pointToGrade = (point: number): ScoredGrade | undefined => {
-  if (point > 100) return void 0;
-  if (90 <= point) return '優上';
-  if (80 <= point) return '優';
-  if (65 <= point) return '良';
-  if (50 <= point) return '可';
-  if (0 <= point) return '不可';
-  return void 0;
-};

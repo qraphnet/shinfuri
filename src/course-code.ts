@@ -680,3 +680,17 @@ export const getCourseCodes = (): CourseCode[] => {
   }
   return courseCodes;
 };
+
+let courseCodeMap: Record<CourseCode, string[]>;
+export const getCourseCodeMap = (): Record<CourseCode, string[]> => {
+  if (courseCodeMap == null) {
+    const map = {} as Record<string, string[]>;
+    for (const [k, v] of Object.entries(serialNumberMap)) {
+      for (const [l, w] of Object.entries(v)) {
+        map[k + l] = w;
+      }
+    }
+    courseCodeMap = map;
+  }
+  return courseCodeMap;
+};
