@@ -11,7 +11,6 @@ import {Karui, Group, LanguageOption, Phase} from "./type-utils.js";
 import {Weighted, bundle, distributeBasic, distributeChoiki, distributeEng} from "./weights.js";
 
 export type AverageType = '基本' | '工学' | '超域';
-const dmap = { 基本: distributeBasic, 工学: distributeEng, 超域: distributeChoiki } satisfies Record<AverageType, any>;
 
 export type CalculationTicket<R extends ScoredCourseReport> = {
   avgType: AverageType;
@@ -46,7 +45,7 @@ export const makeTicket = <R extends SpecificReport>(reports: R[], options: Opti
   const reportList = lastRepetition == null ? reports : reports.filter(disableAbsentBeforeRepetition(lastRepetition));
   for (const r of courseRequirementPatterns) {
     const reps = crApply(r, reportList);
-    const weighted = dmap[avgType](reps.filter(isScoredReport), requirements);
+    const weighted = { '基本': distributeBasic, '工学': distributeEng, '超域': distributeChoiki }[avgType](reps.filter(isScoredReport), requirements);
     swApply(weighted, specifiedWeightRules);
     const weights = bundle(weighted).filter(exclude.length === 0 ? () => true : w => !exclude.includes(w.report.grade));
 
