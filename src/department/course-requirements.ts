@@ -1,6 +1,6 @@
 import {CourseCode, getTitle} from "../course-code.js";
 import {Credit} from "../course.js";
-import {SpecificReport} from "../report.js";
+import {SpecificReport, UnenrolledSpecificReport} from "../report.js";
 import {Karui} from "../type-utils.js";
 
 // 要求科目を表現するためのユーティリティを定義する
@@ -84,9 +84,9 @@ const iterateCombination = function*<T>(n: number, source: T[], picked: T[] = []
 export type RequiredCourse = { code: CourseCode; credit: Credit; };
 const $course = (code: CourseCode, credit: Credit): Value<RequiredCourse> => new Value({ code, credit });
 
-export const apply = (requiredCourse: RequiredCourse[], to: readonly SpecificReport[]): SpecificReport[] => {
+export const apply = <R extends SpecificReport>(requiredCourse: RequiredCourse[], to: readonly R[]): (R | UnenrolledSpecificReport)[] => {
   const yet = requiredCourse.filter(c => !to.some(r => r.course.code == c.code));
-  return to.concat(yet.map<SpecificReport>(course => ({ course, grade: '未履修', point: 0, descriotion: '要求科目' })));
+  return (to as (R | UnenrolledSpecificReport)[]).concat(yet.map<UnenrolledSpecificReport>(course => ({ course, grade: '未履修', point: 0, descriotion: '要求科目' })));
 };
 
 export type CourseRequirement = All<RequiredCourse>;

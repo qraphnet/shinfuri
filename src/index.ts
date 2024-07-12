@@ -12,10 +12,10 @@ import {Weighted, bundle, distributeBasic, distributeChoiki, distributeEng} from
 
 export type AverageType = '基本' | '工学' | '超域';
 
-export type CalculationTicket<R extends ScoredCourseReport> = {
+export type CalculationTicket<R extends SpecificReport> = {
   avgType: AverageType;
-  weights: Weighted<R | UnenrolledReport>[];
-  additionalPoint: AdditionalPoint[];
+  weights: Weighted<R & ScoredCourseReport | UnenrolledReport>[];
+  additionalPoint: AdditionalPoint<R>[];
   factor: Rational | undefined; // 取得単位数(上限90)を掛ける場合
 };
 
@@ -28,7 +28,7 @@ export type Options = {
   exclude: ScoredCourseReport['grade'][]; // 計算から除外するやつ
   lastRepetition?: Repetition;
 };
-export const makeTicket = <R extends SpecificReport>(reports: R[], options: Options): CalculationTicket<R & ScoredCourseReport> => {
+export const makeTicket = <R extends SpecificReport>(reports: R[], options: Options): CalculationTicket<R> => {
   const { karui, langOption, department, phase, exclude, group, lastRepetition } = options;
   const requirements = generateRequirements({ karui, langOption, forCalculation: true });
   const { avgType, courseRequirementPatterns, specifiedWeightRules, additionalPointRules, doesMultiplyByAcquired } = getDepartmentInfo(department, phase, karui);
@@ -39,7 +39,7 @@ export const makeTicket = <R extends SpecificReport>(reports: R[], options: Opti
   const acquiredUnitSum = reports.filter(r => !['不可', '欠席', '未履修'].includes(r.grade) || avgCredited.has(r as any)).reduce((p, r) => p + r.course.credit, 0);
   const factor = doesMultiplyByAcquired ? Rational.int(Math.min(90, acquiredUnitSum)) : undefined;
 
-  let res: CalculationTicket<R & ScoredCourseReport>;
+  let res: CalculationTicket<R>;
   let avg = -1;
 
   const reportList = lastRepetition == null ? reports : reports.filter(disableAbsentBeforeRepetition(lastRepetition));
@@ -49,7 +49,7 @@ export const makeTicket = <R extends SpecificReport>(reports: R[], options: Opti
     swApply(weighted, specifiedWeightRules);
     const weights = bundle(weighted).filter(exclude.length === 0 ? () => true : w => !exclude.includes(w.report.grade));
 
-    const ticket: CalculationTicket<R & ScoredCourseReport> = { avgType, weights, additionalPoint, factor };
+    const ticket: CalculationTicket<R> = { avgType, weights, additionalPoint, factor };
     if (calculate(ticket).toNumber() > avg) res = ticket;
   }
 
@@ -80,7 +80,7 @@ export const sumWeightedPoint = (weights: readonly Weighted<ScoredCourseReport>[
   }, Rational.int(0))
 ;
 
-export const calculate = <R extends ScoredCourseReport>(ticket: CalculationTicket<R>): Rational => {
+export const calculate = <R extends SpecificReport>(ticket: CalculationTicket<R>): Rational => {
   const credits = sumWeightedCredit(ticket.weights), points = sumWeightedPoint(ticket.weights, ticket.avgType === '工学');
 
   let avg = points.div(credits).mul(ticket.factor ?? Rational.int(1));

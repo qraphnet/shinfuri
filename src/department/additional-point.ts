@@ -1,4 +1,4 @@
-import {CourseCode, Scope} from "../course-code.js";
+import {Scope} from "../course-code.js";
 import {SpecificReport} from "../report.js";
 import {Karui} from "../type-utils.js";
 
@@ -9,21 +9,19 @@ export type AdditionalPointRule = {
   max: number | undefined;
   point: Point;
 };
-export type AdditionalPoint = {
-  code: CourseCode;
+export type AdditionalPoint<R extends SpecificReport> = {
+  report: R;
   point: Point;
   valid: boolean;
 };
 export type AdditionalPointRuleGenerator = (karui: Karui) => AdditionalPointRule[];
 const $ = (scope: Scope, max: number | undefined, point: Point): AdditionalPointRule => ({ scope, max, point });
 
-export const calc = (reports: SpecificReport[], rule: AdditionalPointRule): AdditionalPoint[] => {
+export const calc = <R extends SpecificReport>(reports: R[], rule: AdditionalPointRule): AdditionalPoint<R>[] => {
   const { scope, max, point } = rule;
   return reports
-    .filter(r => !['不可', '欠席', '不合格', '未履修'].includes(r.grade))
-    .map(r => r.course.code)
-    .filter(scope.pred)
-    .map((code, i) => ({ code, point, valid: max == null || (i + 1) <= max }));
+    .filter(r => !['不可', '欠席', '不合格', '未履修'].includes(r.grade) && scope.match(r.course.code))
+    .map((report, i) => ({ report, point, valid: max == null || (i + 1) <= max }));
 };
 
 export const none: AdditionalPointRuleGenerator = () => [];
