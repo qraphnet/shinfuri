@@ -28,14 +28,14 @@ class All<T> extends Rule<T> {
   satisfy(): T[][] {
     const anys = this.choices.map(p => p.satisfy())
     anys.reverse();
-    const n = anys.reduce((p, c) => p + c.length, 0);
+    const n = anys.reduce((p, c) => p * c.length, 1);
     const res: T[][] = [];
     for (let i = 0; i < n; ++i) {
       const r: T[] = [];
       let j = i;
       for (const a of anys) {
         r.push(...a[j % a.length]);
-        j /= a.length;
+        j = Math.floor(j / a.length);
       }
       res.push(r);
     }
