@@ -37,14 +37,15 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
   const specifiedWeightRules = (
     sub(d, '教養/教養学科/地域文化研究') ? sw.地域文化研究 :
     sub(d, '教養/教養学科/総合社会科学') ? sw.総合社会科学 :
-    sub(d, '教養/教養学科/国際日本研究コース') ? sw.総合社会科学 :
+    sub(d, '教養/教養学科/国際日本研究コース') ? sw.国際日本研究PEAK後期 :
     sub(d, '教養/統合自然科学科/数理自然科学') ? sw.数理自然科学 :
     sub(d, '教養/統合自然科学科/物質基礎科学') ? sw.物質基礎科学 :
     sub(d, '教養/統合自然科学科/統合生命科学') ? sw.統合生命化学 :
     sub(d, '工/社会基盤学科', '工/建築学科', '工/機械工学科', '工/航空宇宙工学科', '工/精密工学科', '工/電子情報工学科', '工/電気電子工学科', '工/物理工学科', '工/計数工学科', '工/マテリアル工学科', '工/応用化学', '工/化学システム工学科', '工/化学生命工学科', '工/システム創生学科') ? sw.初ゼミ０ :
+    sub(d, '工/計数工学科') && phase != 1 ? sw.計数 :
     sub(d, '理/地球惑星物理学') ? sw.地球惑星物理学 :
     sub(d, '理/生物化学') && phase != 3 ? sw.生物化学 :
-    phase == 2 ? (
+    sub(d, '農') && phase == 2 ? (
       sub(d, '農/応用生命科学/応用生物学', '農/環境資源科学/緑地環境学') ? sw.応用生物学 :
       sub(d, '農/応用生命科学/森林生物科学', '農/環境資源科学/森林環境資源科学') ? sw.森林生物科学 :
       sub(d, '農/応用生命科学/水圏生物科学') ? sw.水圏生物科学 :
@@ -57,7 +58,6 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
     sub(d, '理', '薬', '医') ? () => sw.requiredCourseAllOne(courseRequirement) :
     sw.none
   )(karui);
-  if (sub(d, '工/計数工学科') && phase != 1) specifiedWeightRules.push(...sw.計数(karui));
 
   const additionalPointRules = (
     sub(d, '教養/教養学科/国際日本研究コース') ? ap.国際日本研究PEAK後期 :
