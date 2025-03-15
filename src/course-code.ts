@@ -20,7 +20,7 @@ export class Scope {
   get pred(): (code: CourseCodePrefix) => boolean {
     return this.match.bind(this);
   }
-};
+}
 
 // 科目コードの順序を定義（整理番号表（https://www.c.u-tokyo.ac.jp/zenki/z-numbercode2024.pdf）に基づく）
 const departmentOrder = Object.fromEntries([...['FC','IC','GC','TC','PF','PI','PG','PT'].entries()].map(([k,v])=>[v,k])) as Record<DepartmentCode, number>;
@@ -394,6 +394,9 @@ export const serialNumberMap = {
       'A16': ['言語態理論'],
       'A17': ['外国文学'],
       'A18': ['言語文化論'],
+      'A19': ['批評理論'],
+      'A1a': ['文化横断論'],
+      'A1b': ['テクスト文化論'],
       'A21': ['現代哲学'],
       'A22': ['科学哲学'],
       'A23': ['現代思想'],
