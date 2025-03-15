@@ -50,7 +50,11 @@ export const makeTicket = <R extends SpecificReport>(reports: R[], options: Opti
     const weights = bundle(weighted).filter(exclude.length === 0 ? () => true : w => !exclude.includes(w.report.grade));
 
     const ticket: CalculationTicket<R> = { avgType, weights, additionalPoint, factor };
-    if (calculate(ticket).toNumber() > avg) res = ticket;
+    const score = calculate(ticket).toNumber();
+    if (score > avg) {
+      avg = score;
+      res = ticket;
+    }
   }
 
   return res!;
