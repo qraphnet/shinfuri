@@ -5,7 +5,7 @@ import {Department, getDepartmentInfo} from "./department/index.js";
 import {apply as swApply} from "./department/specific-weights.js";
 import {Repetition, disableAbsentBeforeRepetition} from "./repetition.js";
 import {generateRequirements} from "./quota/shuryo.js";
-import {Rational} from "./rational.js";
+import {FP, Rational} from "./rational.js";
 import {ScoredCourseReport, SpecificReport, UnenrolledReport, isScoredReport} from "./report.js";
 import {Karui, Group, LanguageOption, Phase} from "./type-utils.js";
 import {Weighted, bundle, distributeBasic, distributeChoiki, distributeEng} from "./weights.js";
@@ -96,3 +96,41 @@ export const calculate = <R extends SpecificReport>(ticket: CalculationTicket<R>
   return avg;
 };
 
+// 浮動小数点数で計算する
+
+export const sumWeightedCreditFP = (weights: readonly Weighted<ScoredCourseReport>[]): FP =>
+  weights.reduce(
+    (p, { weights }) => weights.reduce((p, { credit, value: weight }) => {
+      const cr = FP.int(credit);
+      const wr = FP.deci.mul(FP.int(Math.round(weight * 10)));
+      return p.add(cr.mul(wr));
+    }, p),
+    FP.int(0),
+  )
+;
+
+export const sumWeightedPointFP = (weights: readonly Weighted<ScoredCourseReport>[], eng: boolean): FP =>
+  weights.reduce((p, { report: { point }, weights }) => {
+    const sr = FP.int(eng ? engPoint(point) : point);
+    
+    return weights.reduce((p, { credit, value: weight }) => {
+      const cr = FP.int(credit);
+      const wr = FP.deci.mul(FP.int(Math.round(weight * 10)));
+      return p.add(sr.mul(cr).mul(wr));
+    }, p);
+  }, FP.int(0))
+;
+
+export const calculateFP = <R extends SpecificReport>(ticket: CalculationTicket<R>): FP => {
+  const credits = sumWeightedCreditFP(ticket.weights), points = sumWeightedPointFP(ticket.weights, ticket.avgType === '工学');
+  
+  let avg = points.div(credits).mul(ticket.factor == null ? FP.int(1) : FP.from(ticket.factor));
+  for (const { point: p, valid } of ticket.additionalPoint) {
+    if (valid) {
+      const point = FP.deci.mul(FP.int(Math.round(p * 10)));
+      avg         = avg.add(point);
+    }
+  }
+  
+  return avg;
+};

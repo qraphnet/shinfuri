@@ -57,3 +57,50 @@ export class Rational {
     );
   }
 }
+
+/**
+ * 浮動小数点数をRationalと同じインターフェースで扱うためのクラス
+ */
+export class FP {
+  #value: number;
+  
+  // numeratorやdenominatorに非整数が与えられると面倒だから，外部からはRational.intでしかインスタンスを作れないようにprivateとしている
+  private constructor(value: number) {
+    this.#value = value;
+  }
+  
+  static int(n: number): FP {
+    if (n % 1 !== 0) throw new Error('the given number is not integer');
+    return new FP(n);
+  }
+  
+  static from(rational: Rational): FP {
+    return new FP(rational.toNumber());
+  }
+  
+  // 重率等で0.1の整数倍が多いので，0.1に対応するFPを定義
+  static deci: FP;
+  static {
+    this.deci = new FP(0.1);
+  }
+  
+  toNumber(): number {
+    return this.#value;
+  }
+  
+  add(rhs: FP): FP {
+    return new FP(this.#value + rhs.#value);
+  }
+  
+  sub(rhs: FP): FP {
+    return new FP(this.#value - rhs.#value);
+  }
+  
+  mul(rhs: FP): FP {
+    return new FP(this.#value * rhs.#value);
+  }
+  
+  div(rhs: FP): FP {
+    return new FP(this.#value / rhs.#value);
+  }
+}
