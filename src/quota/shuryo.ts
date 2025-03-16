@@ -156,7 +156,7 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
         {
           description: '展開科目は重率0.1',
           references: [bunka ? 'p.56 文科 9)' : 'p.56 理科 7)'],
-          verify: (_, __, w) => w === 1.0,
+          verify: (_, __, w) => w === 0.1,
         },
         {
           description: '社会科学ゼミナールは算入されない',
