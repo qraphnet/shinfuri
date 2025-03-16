@@ -166,13 +166,13 @@ export const generateRequirements = (options: GenerateOptions): Requirements => 
       ]),
       new Quota('総合科目', 0, new Scope([
         'GC', 'PF510', 'PF520', 'PF530', 'PF540', 'PF6', 'PG', ...bunka ? ['FC87', 'FC88', 'FC89'] as const : []
-      ])).withSub(1, [
-        new Quota('L, A, B, C', 17, new Scope([
+      ])).withSub(1, !bunka3rui ? [] : [
+        new Quota('L, A, B, C', 2 + firstL.n! + secondL!.n! + 8, new Scope([
           'GCL', 'GCA', 'GCB', 'GCC',
           'PF510', 'PF520', 'PF530', 'PF540', // 社会科学（PEAK）※数学を除く
           'PF620', 'PF630', // 人文科学 歴史，こと文（PEAK）
           'PGA', 'PGB', 'PGC', // 総合科目A, B, C（PEAK）
-        ])).withSub(3, !bunka3rui ? [] : [
+        ])).withSub(3, [
           new Quota('L', 2 + firstL.n! + secondL!.n!, new Scope(['GCL'])).withSub(2, [firstL, secondL!]),
           new Quota('A', void 0, new Scope(['GCA', 'PF630', 'PGA'])),
           new Quota('B', void 0, new Scope(['GCB', 'PF540', 'PF620', 'PGB'])),
