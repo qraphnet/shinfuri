@@ -41,8 +41,8 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
     sub(d, '教養/統合自然科学科/数理自然科学') ? sw.数理自然科学 :
     sub(d, '教養/統合自然科学科/物質基礎科学') ? sw.物質基礎科学 :
     sub(d, '教養/統合自然科学科/統合生命科学') ? sw.統合生命化学 :
-    sub(d, '工/社会基盤学科', '工/建築学科', '工/機械工学科', '工/航空宇宙工学科', '工/精密工学科', '工/電子情報工学科', '工/電気電子工学科', '工/物理工学科', '工/計数工学科', '工/マテリアル工学科', '工/応用化学', '工/化学システム工学科', '工/化学生命工学科', '工/システム創生学科') ? sw.初ゼミ０ :
-    sub(d, '工/計数工学科') && phase != 1 ? sw.計数 :
+    sub(d, '工/社会基盤学科', '工/建築学科', '工/機械工学科', '工/航空宇宙工学科', '工/精密工学科', '工/電子情報工学科', '工/電気電子工学科', '工/物理工学科', '工/マテリアル工学科', '工/応用化学', '工/化学システム工学科', '工/化学生命工学科', '工/システム創生学科') ? sw.初ゼミ０ :
+    sub(d, '工/計数工学科') ? (phase == 1 ? sw.初ゼミ０ : (k: Karui) => sw.初ゼミ０(k).concat(sw.計数(k)) ) :
     sub(d, '理/地球惑星物理学') ? sw.地球惑星物理学 :
     sub(d, '理/生物化学') && phase != 3 ? sw.生物化学 :
     sub(d, '農') && phase == 2 ? (
@@ -76,7 +76,7 @@ export const getDepartmentInfo = (d: Department, phase: Phase, karui: Karui): De
 };
 
 type Substr<S extends string> = S extends `${infer T}/${infer U}` ? T | `${T}/${Substr<U>}` : S extends `${infer T}（${any}）` ? T : S;
-const sub = (d: Department, ...ds: Substr<Department>[]) => ds.some(s => d.startsWith(s));
+const sub = <D extends Department, S extends Substr<D>>(d: D, ...ds: S[]): d is (D extends `${S}/${string}` | S ? D : never) => ds.some(s => d.startsWith(s));
 export type Department = (typeof department)[number];
 export const isDepartment = (value: unknown): value is Department => department.includes(value as any);
 export const department = [
